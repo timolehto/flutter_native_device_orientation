@@ -9,8 +9,14 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => new _MyAppState();
 }
 
+enum SensorSetting {
+  no_sensor,
+  sensor_with_calc,
+  sensor_with_ui
+}
+
 class _MyAppState extends State<MyApp> {
-  bool useSensor = false;
+  SensorSetting sensorSetting = SensorSetting.no_sensor;
   List<DeviceOrientation> orientations = List();
 
   toggleOrientation(DeviceOrientation orientation) {
@@ -22,6 +28,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  sensorSettingChanged(SensorSetting newSetting) {
+    setState(() {
+      sensorSetting = newSetting;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
@@ -29,12 +41,30 @@ class _MyAppState extends State<MyApp> {
           appBar: new AppBar(
             title: new Text('Native Orientation example app'),
             actions: <Widget>[
-              SizedBox(width: 220, child: SwitchListTile(
-                title: const Text('Use sensors'),
-                value: useSensor,
-                onChanged: (val) => setState(() => useSensor = val),
-                secondary: const Icon(Icons.settings_input_antenna),
-              )),
+                  SizedBox(width: 200, child: ListTile(
+                    title: const Text('No sensor'),
+                    leading: Radio(
+                      value: SensorSetting.no_sensor,
+                      groupValue: sensorSetting,
+                      onChanged: sensorSettingChanged,
+                    ),
+                  )),
+                  SizedBox(width: 200, child: ListTile(
+                    title: const Text('Calcualte with sensor'),
+                    leading: Radio(
+                      value: SensorSetting.sensor_with_calc,
+                      groupValue: sensorSetting,
+                      onChanged: sensorSettingChanged,
+                    ),
+                  )),
+                  SizedBox(width: 200, child: ListTile(
+                    title: const Text('UI orientation with sensor'),
+                    leading: Radio(
+                      value: SensorSetting.sensor_with_ui,
+                      groupValue: sensorSetting,
+                      onChanged: sensorSettingChanged,
+                    ),
+                  )),
             ],
           ),
           body: Stack(
@@ -45,7 +75,8 @@ class _MyAppState extends State<MyApp> {
                   print("Received new orientation: $orientation");
                   return Center(child: Text('Native Orientation: $orientation\n'));
                 },
-                useSensor: useSensor,
+                useSensor: sensorSetting == SensorSetting.sensor_with_ui || sensorSetting == SensorSetting.sensor_with_calc,
+                calculateOrientation: sensorSetting != SensorSetting.sensor_with_ui
               ),
               Container(
                 alignment: Alignment.topRight,
