@@ -94,6 +94,7 @@ public class NativeDeviceOrientationPlugin implements MethodCallHandler, EventCh
     @Override
     public void onListen(Object parameters, final EventChannel.EventSink eventSink) {
         boolean useSensor = false;
+        boolean calculateOrientation = true;
         // used hashMap to send parameters to this method. This makes it easier in the future to add new parameters if needed.
         if(parameters instanceof Map){
             Map params = (Map) parameters;
@@ -101,6 +102,12 @@ public class NativeDeviceOrientationPlugin implements MethodCallHandler, EventCh
             if(params.containsKey("useSensor")){
                 Boolean useSensorNullable = (Boolean) params.get("useSensor");
                 useSensor = useSensorNullable != null && useSensorNullable;
+            }
+            if(params.containsKey("calculateOrientation")) {
+                Boolean calculateOrientationNullable = (Boolean) params.get("calculateOrientation");
+                if(calculateOrientationNullable != null) {
+                    calculateOrientation = calculateOrientationNullable;
+                }
             }
         }
 
@@ -114,7 +121,7 @@ public class NativeDeviceOrientationPlugin implements MethodCallHandler, EventCh
 
         if(useSensor){
             Log.i("NDOP", "listening using sensor listener");
-            listener = new SensorOrientationListener(reader, context, callback);
+            listener = new SensorOrientationListener(reader, context, callback, calculateOrientation);
         }else{
             Log.i("NDOP", "listening using window listener");
             listener = new OrientationListener(reader, context, callback);

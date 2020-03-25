@@ -8,8 +8,9 @@ enum NativeDeviceOrientation { portraitUp, portraitDown, landscapeLeft, landscap
 class _OrientationStream {
   final Stream<NativeDeviceOrientation> stream;
   final bool useSensor;
+  final bool calculateOrientation;
 
-  _OrientationStream({@required this.stream, @required this.useSensor});
+  _OrientationStream({@required this.stream, @required this.useSensor, this.calculateOrientation});
 }
 
 class NativeDeviceOrientationCommunicator {
@@ -35,9 +36,10 @@ class NativeDeviceOrientationCommunicator {
   @visibleForTesting
   NativeDeviceOrientationCommunicator.private(this._methodChannel, this._eventChannel);
 
-  Future<NativeDeviceOrientation> orientation({bool useSensor = false}) async {
+  Future<NativeDeviceOrientation> orientation({bool useSensor = false, bool calculateOrientation = true}) async {
     final Map<String, dynamic> params = <String, dynamic>{
       'useSensor': useSensor,
+      'calculateOrientation': calculateOrientation,
     };
     final String orientation = await _methodChannel.invokeMethod('getOrientation', params);
     return _fromString(orientation);
@@ -53,16 +55,18 @@ class NativeDeviceOrientationCommunicator {
     await _methodChannel.invokeMethod('resume');
   }
 
-  Stream<NativeDeviceOrientation> onOrientationChanged({bool useSensor = false}) {
+  Stream<NativeDeviceOrientation> onOrientationChanged({bool useSensor = false, bool calculateOrientation = true}) {
     if (_stream == null || _stream.useSensor != useSensor) {
       final Map<String, dynamic> params = <String, dynamic>{
         'useSensor': useSensor,
+        'calculateOrientation': calculateOrientation,
       };
       _stream = _OrientationStream(
           stream: _eventChannel.receiveBroadcastStream(params).map((dynamic event) {
             return _fromString(event);
           }),
-          useSensor: useSensor);
+          useSensor: useSensor,
+          calculateOrientation: calculateOrientation);
     }
     return _stream.stream;
   }
@@ -88,11 +92,13 @@ class NativeDeviceOrientationReader extends StatefulWidget {
   const NativeDeviceOrientationReader({
     Key key,
     this.useSensor = false,
+    this.calculateOrientation = true,
     @required this.builder,
   }) : super(key: key);
 
   final WidgetBuilder builder;
   final bool useSensor;
+  final bool calculateOrientation;
 
   static NativeDeviceOrientation orientation(BuildContext context) {
     final _InheritedNativeDeviceOrientation inheritedNativeOrientation =
@@ -156,7 +162,7 @@ class NativeDeviceOrientationReaderState extends State<NativeDeviceOrientationRe
   Widget build(BuildContext context) {
     return new LayoutBuilder(builder: (context, constraints) {
       return new StreamBuilder(
-        stream: deviceOrientationCommunicator.onOrientationChanged(useSensor: widget.useSensor),
+        stream: deviceOrientationCommunicator.onOrientationChanged(useSensor: widget.useSensor, calculateOrientation: widget.calculateOrientation),
         builder: (context, AsyncSnapshot<NativeDeviceOrientation> asyncResult) {
           if (asyncResult.connectionState == ConnectionState.waiting) {
             return new OrientationBuilder(builder: (buildContext, orientation) {

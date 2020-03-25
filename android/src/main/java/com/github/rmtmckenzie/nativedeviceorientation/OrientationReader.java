@@ -64,7 +64,7 @@ public class OrientationReader {
                 orientationListener.stopOrientationListener();
                 orientationListener = null;
             }
-        });
+        }, true);
         orientationListener.startOrientationListener();
 
     }
